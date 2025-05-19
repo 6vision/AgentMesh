@@ -1,7 +1,7 @@
 import importlib
 import importlib.util
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Any, Type
 from agentmesh.tools.base_tool import BaseTool
 from agentmesh.common import config
 from agentmesh.common.utils.log import logger  # Import the logging module
@@ -26,17 +26,75 @@ class ToolManager:
         if not hasattr(self, 'tool_classes'):
             self.tool_classes = {}  # Dictionary to store tool classes
 
-    def load_tools(self, tools_dir: str = "agentmesh/tools"):
+    def load_tools(self, tools_dir: str = "", config_dict=None):
         """
         Load tools from both directory and configuration.
 
         :param tools_dir: Directory to scan for tool modules
         """
-        # First, load tools from directory (for backward compatibility)
-        self._load_tools_from_directory(tools_dir)
+        if tools_dir:
+            self._load_tools_from_directory(tools_dir)
+            self._configure_tools_from_config()
+        else:
+            self._load_tools_from_init()
+            self._configure_tools_from_config(config_dict)
 
-        # Then, configure tools from config file
-        self._configure_tools_from_config()
+    def _load_tools_from_init(self) -> bool:
+        """
+        Load tool classes from tools.__init__.__all__
+
+        :return: True if tools were loaded, False otherwise
+        """
+        try:
+            # Try to import the tools package
+            tools_package = importlib.import_module("agentmesh.tools")
+
+            # Check if __all__ is defined
+            if hasattr(tools_package, "__all__"):
+                tool_classes = tools_package.__all__
+
+                # Import each tool class directly from the tools package
+                for class_name in tool_classes:
+                    try:
+                        # Skip base classes
+                        if class_name in ["BaseTool", "ToolManager"]:
+                            continue
+
+                        # Get the class directly from the tools package
+                        if hasattr(tools_package, class_name):
+                            cls = getattr(tools_package, class_name)
+
+                            if (
+                                    isinstance(cls, type)
+                                    and issubclass(cls, BaseTool)
+                                    and cls != BaseTool
+                            ):
+                                try:
+                                    # Create a temporary instance to get the name
+                                    temp_instance = cls()
+                                    tool_name = temp_instance.name
+                                    # Store the class, not the instance
+                                    self.tool_classes[tool_name] = cls
+                                    logger.debug(f"Loaded tool: {tool_name} from class {class_name}")
+                                except ImportError as e:
+                                    # Ignore browser_use dependency missing errors
+                                    if "browser_use" in str(e):
+                                        pass
+                                    else:
+                                        logger.error(f"Error initializing tool class {cls.__name__}: {e}")
+                                except Exception as e:
+                                    logger.error(f"Error initializing tool class {cls.__name__}: {e}")
+                    except Exception as e:
+                        logger.error(f"Error importing class {class_name}: {e}")
+
+                return len(self.tool_classes) > 0
+            return False
+        except ImportError:
+            logger.warning("Could not import agentmesh.tools package")
+            return False
+        except Exception as e:
+            logger.error(f"Error loading tools from __init__.__all__: {e}")
+            return False
 
     def _load_tools_from_directory(self, tools_dir: str):
         """Dynamically load tool classes from directory"""
@@ -83,11 +141,11 @@ class ToolManager:
             except Exception as e:
                 print(f"Error importing module {py_file}: {e}")
 
-    def _configure_tools_from_config(self):
+    def _configure_tools_from_config(self, config_dict=None):
         """Configure tool classes based on configuration file"""
         try:
             # Get tools configuration
-            tools_config = config().get("tools", {})
+            tools_config = config_dict or config().get("tools", {})
 
             # Record tools that are configured but not loaded
             missing_tools = []

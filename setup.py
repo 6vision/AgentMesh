@@ -10,7 +10,7 @@ with open('requirements.txt') as f:
 
 setup(
     name="agentmesh-sdk",
-    version="0.1.0",
+    version="0.1.1",
     author="Minimal Future",
     author_email="zyj@zhayujie.com",
     description="An open-source multi-agent framework for building agent teams with LLMs",

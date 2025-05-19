@@ -107,7 +107,7 @@ def main():
     load_config()
 
     # Load tools
-    ToolManager().load_tools()
+    ToolManager().load_tools("agentmesh/tools")
 
     # List teams if requested
     if args.list:
