@@ -1,4 +1,4 @@
-from typing import Union, Literal
+from typing import Union, Literal, Generator, Dict, Any
 import json
 import re
 
@@ -46,14 +46,16 @@ class AgentTeam:
 
         self.agents.append(agent)
 
-    def run(self, task: Union[str, Task], output_mode: Literal["print", "logger"] = "logger") -> TeamResult:
+    def run(self, task: Union[str, Task], output_mode: Literal["print", "logger"] = "logger", stream: bool = False) -> \
+            Union[TeamResult, Generator[Dict[str, Any], None, TeamResult]]:
         """
         Decide which agent will handle the task and execute its step method.
         
         :param task: The task to be processed, can be a string or Task object
         :param output_mode: Control how execution progress is displayed: 
                            "print" for console output or "logger" for using logger
-        :return: A TeamResult object containing the execution results
+        :param stream: If True, yield agent execution results as they occur
+        :return: A TeamResult object or a generator yielding agent execution results and finally the TeamResult
         """
         # Set output mode in context for agents to use
         self.context.output_mode = output_mode
@@ -182,6 +184,10 @@ class AgentTeam:
                 # Add the selected agent result to the team result
                 result.add_agent_result(agent_result)
 
+                # Yield the agent result if streaming is enabled
+                if stream:
+                    yield agent_result.to_dict()
+
                 # Process the agent chain
                 current_agent = selected_agent
                 while True:
@@ -231,6 +237,10 @@ class AgentTeam:
 
                     # Add the next agent result to the team result
                     result.add_agent_result(next_agent_result)
+
+                    # Yield the next agent result if streaming is enabled
+                    if stream:
+                        yield next_agent_result.to_dict()
 
                     # Update current agent for the next iteration
                     current_agent = next_agent

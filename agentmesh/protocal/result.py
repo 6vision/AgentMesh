@@ -100,6 +100,37 @@ class AgentExecutionResult:
         """Mark the agent execution as complete."""
         self.end_time = time.time()
 
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert the agent execution result to a dictionary for serialization."""
+        return {
+            "agent_id": self.agent_id,
+            "agent_name": self.agent_name,
+            "subtask": self.subtask,
+            "actions": [
+                {
+                    "id": action.id,
+                    "agent_id": action.agent_id,
+                    "agent_name": action.agent_name,
+                    "action_type": action.action_type.value,
+                    "content": action.content,
+                    "tool_result": {
+                        "tool_name": action.tool_result.tool_name,
+                        "input_params": action.tool_result.input_params,
+                        "output": action.tool_result.output,
+                        "status": action.tool_result.status,
+                        "error_message": action.tool_result.error_message,
+                        "execution_time": action.tool_result.execution_time
+                    } if action.tool_result else None,
+                    "timestamp": action.timestamp
+                }
+                for action in self.actions
+            ],
+            "final_answer": self.final_answer,
+            "start_time": self.start_time,
+            "end_time": self.end_time,
+            "execution_time": self.execution_time
+        }
+
 
 @dataclass
 class TeamResult:
