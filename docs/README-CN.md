@@ -165,7 +165,7 @@ result = team.run(task="Write a Snake client game")
 ### 模型
 
 - **OpenAI**: 支持 GPT 系列模型，推荐使用 `gpt-4.1`, `gpt-4o`, `gpt-4.1-mini`
-- **Claude**: 支持 Claude系列模型，推荐使用 `claude-3-7-sonnet-latest`
+- **Claude**: 支持 Claude系列模型，推荐使用 `claude-sonnet-4-0`, `claude-3-7-sonnet-latest`
 - **DeepSeek**: 支持 DeepSeek 系列模型，推荐使用 `deepseek-chat`
 - **Ollama**: 支持本地部署的开源模型 (即将支持)
 

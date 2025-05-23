@@ -169,7 +169,7 @@ Coming soon
 ### Supported Models
 
 - **OpenAI**: GPT series models, recommended: `gpt-4.1`, `gpt-4o`, `gpt-4.1-mini`
-- **Claude**: Claude series models, recommended: `claude-3-7-sonnet-latest`
+- **Claude**: Claude series models, recommended: `claude-sonnet-4-0`, `claude-3-7-sonnet-latest`
 - **DeepSeek**: DeepSeek series models, recommended: `deepseek-chat`
 - **Ollama**: Local open-source models (coming soon)
 
